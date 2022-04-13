@@ -1,0 +1,203 @@
+version: "3.8"
+
+services:
+  indy-node_1:
+    image: ${REFERENCE_IMAGE_NAME_NODE}
+    init: true
+    container_name: node1
+    ports:
+      - "${INDY_NODE_PORT_1}:${INDY_NODE_PORT_1}"
+      - "${INDY_CLIENT_PORT_1}:${INDY_CLIENT_PORT_1}"
+    volumes:
+      - ./etc_indy/node1:/etc/indy
+      - ./lib_indy:/var/lib/indy
+    environment:
+     - INDY_NODE_NAME=Node1
+     - INDY_NODE_IP=${INDY_NODE_IP_1}
+     - INDY_NODE_PORT=${INDY_NODE_PORT_1}
+     - INDY_CLIENT_IP=${INDY_CLIENT_IP_1}
+     - INDY_CLIENT_PORT=${INDY_CLIENT_PORT_1}
+    env_file:
+      - .env
+    restart: always
+    networks:
+      indy_node_container_test_network:
+        ipv4_address: 10.133.133.1
+
+  indy-node_2:
+    image: ${REFERENCE_IMAGE_NAME_NODE}
+    init: true
+    container_name: node2
+    ports:
+      - "${INDY_NODE_PORT_2}:${INDY_NODE_PORT_2}"
+      - "${INDY_CLIENT_PORT_2}:${INDY_CLIENT_PORT_2}"
+    volumes:
+      - ./etc_indy/node2:/etc/indy
+      - ./lib_indy:/var/lib/indy
+    environment:
+     - INDY_NODE_NAME=Node2
+     - INDY_NODE_IP=${INDY_NODE_IP_2}
+     - INDY_NODE_PORT=${INDY_NODE_PORT_2}
+     - INDY_CLIENT_IP=${INDY_CLIENT_IP_2}
+     - INDY_CLIENT_PORT=${INDY_CLIENT_PORT_2}
+    env_file:
+      - .env
+    restart: always
+    networks:
+      indy_node_container_test_network:
+        ipv4_address: 10.133.133.2
+
+  indy-node_3:
+    image: ${REFERENCE_IMAGE_NAME_NODE}
+    init: true
+    container_name: node3
+    ports:
+      - "${INDY_NODE_PORT_3}:${INDY_NODE_PORT_3}"
+      - "${INDY_CLIENT_PORT_3}:${INDY_CLIENT_PORT_3}"
+    volumes:
+      - ./etc_indy/node3:/etc/indy
+      - ./lib_indy:/var/lib/indy
+    environment:
+     - INDY_NODE_NAME=Node3
+     - INDY_NODE_IP=${INDY_NODE_IP_3}
+     - INDY_NODE_PORT=${INDY_NODE_PORT_3}
+     - INDY_CLIENT_IP=${INDY_CLIENT_IP_3}
+     - INDY_CLIENT_PORT=${INDY_CLIENT_PORT_3}
+    env_file:
+      - .env
+    restart: always
+    networks:
+      indy_node_container_test_network:
+        ipv4_address: 10.133.133.3
+
+  indy-node_4:
+    image: ${IMAGE_NAME_NODE}
+    init: true
+    container_name: node4
+    ports:
+      - "${INDY_NODE_PORT_4}:${INDY_NODE_PORT_4}"
+      - "${INDY_CLIENT_PORT_4}:${INDY_CLIENT_PORT_4}"
+    volumes:
+      - ./etc_indy/node4:/etc/indy
+      - ./lib_indy:/var/lib/indy
+    environment:
+     - INDY_NODE_NAME=Node4
+     - INDY_NODE_IP=${INDY_NODE_IP_4}
+     - INDY_NODE_PORT=${INDY_NODE_PORT_4}
+     - INDY_CLIENT_IP=${INDY_CLIENT_IP_4}
+     - INDY_CLIENT_PORT=${INDY_CLIENT_PORT_4}
+    env_file:
+      - .env
+    restart: always
+    networks:
+      indy_node_container_test_network:
+        ipv4_address: 10.133.133.4
+
+  #
+  # VON-Network Ledger Browser
+  # see https://github.com/bcgov/von-network
+  #
+  webserver:
+    image: ghcr.io/bcgov/von-network-base:latest
+    init: true
+    container_name: ledger-browser
+    command: 'bash -c ''sleep 10; ./scripts/start_webserver.sh;'''
+    environment:
+      - GENESIS_FILE=/var/lib/indy/$INDY_NETWORK_NAME/pool_transactions_genesis
+      - MAX_FETCH=50000
+      - RESYNC_TIME=120
+      - REGISTER_NEW_DIDS=True
+      - LEDGER_INSTANCE_NAME=Local Test Ledger
+      - WEB_ANALYTICS_SCRIPT=
+      - INFO_SITE_TEXT=Node Container @ GitHub
+      - INFO_SITE_URL=https://github.com/hyperledger/indy-node-container
+    networks:
+      indy_node_container_test_network:
+        ipv4_address: 10.133.133.5
+    ports:
+      - ${WEB_SERVER_HOST_PORT:-9000}:8000
+    volumes:
+      - ./etc_indy:/etc/indy
+      - ./lib_indy:/var/lib/indy
+
+  indy-cli:
+    image: bcgovimages/von-image:py36-1.14-1
+    container_name: client
+    volumes:
+      - ./lib_indy/$INDY_NETWORK_NAME/pool_transactions_genesis:/pool_transactions_genesis
+      - ./etc_indy:/etc/indy
+    restart: "no"
+    networks:
+      indy_node_container_test_network:
+        ipv4_address: 10.133.133.6
+
+  indy-controller_1:
+    image: ${IMAGE_NAME_CONTROLLER}
+    init: true
+    container_name: controller1
+    environment:
+     - NODE_CONTAINER=node1
+     - CONTROLLER_CONTAINER=controller1
+    volumes:
+      - ./etc_indy:/etc/indy
+      - $SOCK:/var/run/docker.sock
+    restart: always
+    networks:
+      indy_node_container_test_network:
+        ipv4_address: 10.133.133.11
+
+
+  indy-controller_2:
+    image: ${IMAGE_NAME_CONTROLLER}
+    init: true
+    container_name: controller2
+    environment:
+      - NODE_CONTAINER=node2
+      - CONTROLLER_CONTAINER=controller2
+    volumes:
+      - ./etc_indy:/etc/indy
+      - $SOCK:/var/run/docker.sock
+    restart: always
+    networks:
+      indy_node_container_test_network:
+        ipv4_address: 10.133.133.12
+
+  indy-controller_3:
+    image: ${IMAGE_NAME_CONTROLLER}
+    init: true
+    container_name: controller3
+    environment:
+      - NODE_CONTAINER=node3
+      - CONTROLLER_CONTAINER=controller3
+    volumes:
+      - ./etc_indy:/etc/indy
+      - $SOCK:/var/run/docker.sock
+    restart: always
+    networks:
+      indy_node_container_test_network:
+        ipv4_address: 10.133.133.13
+
+  indy-controller_4:
+    image: ${IMAGE_NAME_CONTROLLER}
+    init: true
+    container_name: controller4
+    environment:
+      - NODE_CONTAINER=node4
+      - CONTROLLER_CONTAINER=controller4
+    volumes:
+      - ./etc_indy:/etc/indy
+      - $SOCK:/var/run/docker.sock
+    restart: always
+    networks:
+      indy_node_container_test_network:
+        ipv4_address: 10.133.133.14
+
+networks:
+  indy_node_container_test_network:
+    driver: bridge
+    name: indy
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.133.133.0/24
+          gateway: 10.133.133.254
